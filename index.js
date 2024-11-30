@@ -1,10 +1,16 @@
 const express = require('express');
 const http = require('http');
-var cors = require('cors');//
+const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config();
+const uri = process.env.URI;
+const port = process.env.PORT;
+const address = process.env.ADDRESS;
+
 
 const {MongoClient,ObjectId} = require('mongodb');
 
-const client = new MongoClient('mongodb+srv://test_user:Tushar172001@my-cluster.snudrh9.mongodb.net/?retryWrites=true&w=majority&appName=my-cluster');
+const client = new MongoClient(process.env.URI);
 
 const connectDB = async()=>{
     try{
@@ -38,7 +44,10 @@ const server = http.createServer(app); // can be user for websockets
 
 //root path
 app.get('/',async function(req,res){
-    console.log(this.global);
+    res.send('<h2>Hello to express</h2>');
+});
+//health
+app.get('/health',async function(req,res){
     res.send('<h2>Hello to express</h2>');
 });
 
@@ -147,8 +156,6 @@ app.get('/api/v1/get-contacts',(req,res)=>{
     // }).catch(e=>console.log(e.message));
 });
 
-const port = 8000;
-const address = '192.168.1.11';
 app.listen(port,address,function(){
     console.log(`Server listening at http://${address}:${port}`);
 });
