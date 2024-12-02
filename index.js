@@ -60,10 +60,12 @@ app.post('/api/v1/login',function(req,res){
     const {username,password} = req.body;
     mongo.then(async function(db) {
         const result = await db.collection('users').findOne({'username':username});
+        const posts = await db.collection('posts').find({'username':result.username}).toArray();
         if(result){
             res.status(200).json({
                 'status':true,
                 'data':result,
+                'posts':posts,
                 'message':'Success'
             });
         }else{
@@ -86,27 +88,44 @@ app.post('/api/v1/signup',function (req,res) {
                 res.status(200).json({
                     'status':true,
                     'data':formdata,
+                    'posts':[],
                     'message':'Registered successfully'
                 });
             }
         }else{
             res.status(200).json({
                 'status':false,
-                'data':null,
                 'message':'Username already exists'
             });
         }
     });
 });
 
-app.get('/api/v1/get-posts',(req,res)=>{
+app.post('/api/v1/get-posts',(req,res)=>{
+    const {search,category} = req.body;
+
     mongo.then(async(db)=>{
-        const result = await db.collection('posts').find().toArray();
-        if(result.length){
+        var posts = [];
+        var accounts = [];
+        if(category=='Accounts'){
+            // var search_1 = await db.collection('users').find({'username':search}).toArray();
+            accounts = await db.collection('users').find({$text:{$search:search}}).toArray();
+            // accounts = search_1.concat(search_2);
+        }else{
+            posts = await db.collection('posts').find({$text:{$search:search}}).toArray();
+        }
+        var result = {posts:posts,accounts:accounts};
+        if(result){
             res.status(200).json({
                 'status':true,
                 'data':result,
                 'message':'success'
+            });
+        }else if(result==[]){
+            res.status(200).json({
+                'status':false,
+                'data':null,
+                'message':'No posts found'
             });
         }else{
             res.status(200).json({
@@ -130,10 +149,15 @@ app.get('/api/v1/get-user/:username',(req,res)=>{
                 'posts':posts,
                 'message':'success'
             });
+        }else if(result==null){
+            res.status(200).json({
+                'status':true,
+                'data': {username:'User not found'},
+                'message':'User does not exists'
+            });
         }else{
             res.status(200).json({
                 'status':false,
-                'data':null,
                 'message':'Unable to fetch user'
             });
         }
